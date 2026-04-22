@@ -7022,3 +7022,34 @@ Family-extension work (filesystem domain). Implementation:
 
 **Acceptance criterion:**
 Filesystem operation errors must emit operation name + path in error message, enabling `classify_error_kind()` to return specific kind (not "unknown").
+
+---
+
+## Pinpoint #153b (follow-up). Add binary PATH setup guide to README
+
+**Concrete gap (from cycle #48 assessment):**
+
+#153 filed in cycle #30 but never landed. New users post-`cargo build --workspace` don't know:
+1. Where binary ends up (`rust/target/debug/claw` vs. `/usr/local/bin/claw`)
+2. How to verify build (e.g., `./rust/target/debug/claw --help`)
+3. How to add to PATH for shell integration
+
+**Real user friction (from #claw-code):**
+- "claw not found — did build fail?"
+- "do I need `cargo install`?"
+- "why is it at `rust/target/debug/claw` and not just `claw`?"
+
+**Fix shape (minimal, ~40 lines):**
+Add "Post-build: Add to PATH" section in README (after Quick start), covering:
+1. **Binary location:** `rust/target/debug/claw` (debug) or `rust/target/release/claw` (release)
+2. **Quick verification:** `./rust/target/debug/claw --help` (no install needed)
+3. **Optional PATH setup:**
+   ```bash
+   export PATH="$PWD/rust/target/debug:$PATH"
+   claw --help  # should work from anywhere
+   ```
+4. **Permanent setup:** Add the export to `.bashrc` / `.zshrc` if desired
+
+**Acceptance criterion:** After reading this section, a new user should be able to build and run `claw` without confusion about where the binary is or whether the build succeeded.
+
+**Next-cycle action:** Implement #153 (original gap) + #153b (this follow-up) as single 60-line README patch.
