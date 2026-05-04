@@ -398,7 +398,6 @@ fn resumed_inventory_commands_emit_structured_json_when_requested() {
         "count must be a number, not a text render"
     );
 
-
     let plugins = assert_json_command_with_env(
         &root,
         &[
