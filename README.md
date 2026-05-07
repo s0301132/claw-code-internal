@@ -103,7 +103,7 @@ cat >> ~/.zshrc << 'EOF'
 # --- Claw Code / LiteLLM proxy settings ---
 export OPENAI_BASE_URL="{litellm_domain}/v1"
 export OPENAI_API_KEY="{key}"
-export SSL_CERT_FILE="$HOME/Documents/claw-code/ha-ca-bundle.pem"
+export SSL_CERT_FILE="$HOME/Documents/claw-code/cert.pem"
 # -----------------------------------------
 EOF
 source ~/.zshrc
