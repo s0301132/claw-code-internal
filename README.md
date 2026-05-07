@@ -45,14 +45,84 @@ The canonical implementation lives in [`rust/`](./rust), and the current source 
 - **`PHILOSOPHY.md`** — project intent and system-design framing
 - **`src/` + `tests/`** — companion Python/reference workspace and audit helpers; not the primary runtime surface
 
+## Corporate / Proxy Environment Setup
+
+> [!IMPORTANT]
+> If you are behind a corporate proxy or a private CA (e.g. a hospital or enterprise network), complete **all steps in this section before building or running** `claw`. Skipping them will result in TLS errors or connection failures when the binary tries to reach the internet.
+
+### 1. Set proxy environment variables
+
+Open a new terminal and export your proxy settings **before** running any `cargo` or `claw` commands.
+
+```bash
+# Replace with your actual proxy address and port
+export HTTP_PROXY="http://proxy.internal:8080"
+export HTTPS_PROXY="http://proxy.internal:8080"
+export NO_PROXY="localhost,127.0.0.1,.internal"
+```
+
+To make these permanent so every new terminal inherits them automatically, add the lines above to your shell profile:
+
+```bash
+# macOS / Linux — append to ~/.zshrc (zsh) or ~/.bashrc (bash)
+echo 'export HTTP_PROXY="http://proxy.internal:8080"' >> ~/.zshrc
+echo 'export HTTPS_PROXY="http://proxy.internal:8080"' >> ~/.zshrc
+echo 'export NO_PROXY="localhost,127.0.0.1,.internal"'  >> ~/.zshrc
+source ~/.zshrc
+```
+
+### 2. Place the `.env` file and CA certificate
+
+Copy your `.env` file and the corporate CA bundle into the repo root **before building**:
+
+```bash
+# Copy files into the project root (adjust source paths as needed)
+cp /path/to/your/.env      /path/to/claw-code/.env
+cp /path/to/ha-ca-bundle.pem /path/to/claw-code/ha-ca-bundle.pem
+```
+
+The `.env` file must contain at minimum:
+
+```dotenv
+OPENAI_BASE_URL=https://{litellm_domain}/v1
+OPENAI_API_KEY={key}
+SSL_CERT_FILE=/path/to/claw-code/ha-ca-bundle.pem
+```
+
+> [!NOTE]
+> Both `.env` and `*.pem` are listed in `.gitignore` and will never be committed.
+
+### 3. Persist LiteLLM API variables in your shell profile
+
+To avoid re-exporting these on every new terminal session, add them permanently to your shell profile:
+
+```bash
+# macOS / Linux — append to ~/.zshrc (zsh) or ~/.bashrc (bash)
+cat >> ~/.zshrc << 'EOF'
+
+# --- Claw Code / LiteLLM proxy settings ---
+export OPENAI_BASE_URL="{litellm_domain}/v1"
+export OPENAI_API_KEY="{key}"
+export SSL_CERT_FILE="$HOME/Documents/claw-code/ha-ca-bundle.pem"
+# -----------------------------------------
+EOF
+source ~/.zshrc
+```
+
+After this, any new terminal will have the correct API endpoint, key, and CA bundle set automatically without further manual exports.
+
+---
+
 ## Quick start
 
 > [!NOTE]
 > [!WARNING]
 > **`cargo install claw-code` installs the wrong thing.** The `claw-code` crate on crates.io is a deprecated stub that places `claw-code-deprecated.exe` — not `claw`. Running it only prints `"claw-code has been renamed to agent-code"`. **Do not use `cargo install claw-code`.** Either build from source (this repo) or install the upstream binary:
+>
 > ```bash
 > cargo install agent-code   # upstream binary — installs 'agent.exe' (Windows) / 'agent' (Unix), NOT 'agent-code'
 > ```
+>
 > This repo (`ultraworkers/claw-code`) is **build-from-source only** — follow the steps below.
 
 ```bash
@@ -78,11 +148,12 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 
 **PowerShell is a supported Windows path.** Use whichever shell works for you. The common onboarding issues on Windows are:
 
-1. **Install Rust first** — download from <https://rustup.rs/> and run the installer. Close and reopen your terminal when it finishes.
+1. **Install Rust first** — download from [https://rustup.rs/](https://rustup.rs/) and run the installer. Close and reopen your terminal when it finishes.
 2. **Verify Rust is on PATH:**
    ```powershell
    cargo --version
    ```
+
    If this fails, reopen your terminal or run the PATH setup from the Rust installer output, then retry.
 3. **Clone and build** (works in PowerShell, Git Bash, or WSL):
    ```powershell
@@ -107,10 +178,12 @@ After running `cargo build --workspace`, the `claw` binary is built but **not** 
 After `cargo build --workspace` in `claw-code/rust/`:
 
 **Debug build (default, faster compile):**
+
 - **macOS/Linux:** `rust/target/debug/claw`
 - **Windows:** `rust/target/debug/claw.exe`
 
 **Release build (optimized, slower compile):**
+
 - **macOS/Linux:** `rust/target/release/claw`
 - **Windows:** `rust/target/release/claw.exe`
 
@@ -137,10 +210,13 @@ If these commands succeed, the build is working. `claw doctor` is your first hea
 If you want to run `claw` from any directory without the full path, choose one of these approaches:
 
 **Option 1: Symlink (macOS/Linux)**
+
 ```bash
 ln -s $(pwd)/rust/target/debug/claw /usr/local/bin/claw
 ```
+
 Then reload your shell and test:
+
 ```bash
 claw --help
 ```
@@ -148,6 +224,7 @@ claw --help
 **Option 2: Use `cargo install` (all platforms)**
 
 Build and install to Cargo's default location (`~/.cargo/bin/`, which is usually on PATH):
+
 ```bash
 # From the claw-code/rust/ directory
 cargo install --path . --force
@@ -159,11 +236,13 @@ claw --help
 **Option 3: Update shell profile (bash/zsh)**
 
 Add this line to `~/.bashrc` or `~/.zshrc`:
+
 ```bash
 export PATH="$(pwd)/rust/target/debug:$PATH"
 ```
 
 Reload your shell:
+
 ```bash
 source ~/.bashrc  # or source ~/.zshrc
 claw --help
