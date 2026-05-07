@@ -78,7 +78,7 @@ Copy your `.env` file and the corporate CA bundle into the repo root **before bu
 ```bash
 # Copy files into the project root (adjust source paths as needed)
 cp /path/to/your/.env      /path/to/claw-code/.env
-cp /path/to/ha-ca-bundle.pem /path/to/claw-code/ha-ca-bundle.pem
+cp /path/to/cert.pem /path/to/claw-code/cert.pem
 ```
 
 The `.env` file must contain at minimum:
@@ -86,7 +86,7 @@ The `.env` file must contain at minimum:
 ```dotenv
 OPENAI_BASE_URL=https://{litellm_domain}/v1
 OPENAI_API_KEY={key}
-SSL_CERT_FILE=/path/to/claw-code/ha-ca-bundle.pem
+SSL_CERT_FILE=/path/to/claw-code/cert.pem
 ```
 
 > [!NOTE]
@@ -150,18 +150,21 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 
 1. **Install Rust first** — download from [https://rustup.rs/](https://rustup.rs/) and run the installer. Close and reopen your terminal when it finishes.
 2. **Verify Rust is on PATH:**
+
    ```powershell
    cargo --version
    ```
 
    If this fails, reopen your terminal or run the PATH setup from the Rust installer output, then retry.
 3. **Clone and build** (works in PowerShell, Git Bash, or WSL):
+
    ```powershell
    git clone https://github.com/ultraworkers/claw-code
    cd claw-code/rust
    cargo build --workspace
    ```
 4. **Run** (PowerShell — note `.exe` and backslash):
+
    ```powershell
    $env:ANTHROPIC_API_KEY = "sk-ant-..."
    .\target\debug\claw.exe prompt "say hello"
