@@ -80,8 +80,34 @@ pub fn build_http_client_or_default() -> reqwest::Client {
 /// When `config.proxy_url` is set it overrides the per-scheme `http_proxy`
 /// and `https_proxy` fields and is registered as both an HTTP and HTTPS
 /// proxy so a single value can route every outbound request.
+///
+/// When the `SSL_CERT_FILE` environment variable is set, the PEM file at that
+/// path is loaded and its certificates are added as trusted roots. This is the
+/// standard way to trust a private CA bundle (e.g. a self-signed corporate CA)
+/// without modifying the system trust store.
 pub fn build_http_client_with(config: &ProxyConfig) -> Result<reqwest::Client, ApiError> {
     let mut builder = reqwest::Client::builder().no_proxy();
+
+    // Load additional trusted root certificates from SSL_CERT_FILE if set.
+    if let Ok(cert_path) = std::env::var("SSL_CERT_FILE") {
+        let pem = std::fs::read(&cert_path).map_err(|e| {
+            ApiError::Auth(format!("SSL_CERT_FILE: cannot read '{cert_path}': {e}"))
+        })?;
+        // A PEM bundle may contain multiple certificates; split and add each.
+        let pem_str = String::from_utf8_lossy(&pem);
+        let mut remaining = pem_str.as_ref();
+        while let Some(start) = remaining.find("-----BEGIN CERTIFICATE-----") {
+            if let Some(end) = remaining.find("-----END CERTIFICATE-----") {
+                let block = &remaining[start..end + "-----END CERTIFICATE-----".len()];
+                if let Ok(cert) = reqwest::Certificate::from_pem(block.as_bytes()) {
+                    builder = builder.add_root_certificate(cert);
+                }
+                remaining = &remaining[end + "-----END CERTIFICATE-----".len()..];
+            } else {
+                break;
+            }
+        }
+    }
 
     let no_proxy = config
         .no_proxy

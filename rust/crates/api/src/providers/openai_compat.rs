@@ -873,7 +873,11 @@ fn strip_routing_prefix(model: &str) -> &str {
         // Only strip if the prefix before "/" is a known routing prefix,
         // not if "/" appears in the middle of the model name for other reasons.
         if matches!(prefix, "openai" | "xai" | "grok" | "qwen" | "kimi") {
-            &model[pos + 1..]
+            let rest = &model[pos + 1..];
+            // If the remainder still contains slashes (e.g. "zai-org/glm-4.7-flash"),
+            // take only the final segment as the wire model name so that org-scoped
+            // model references like "openai/zai-org/glm-4.7-flash" resolve correctly.
+            rest.rsplit('/').next().unwrap_or(rest)
         } else {
             model
         }

@@ -10,3 +10,14 @@ archive/
 .claw/sessions/
 .clawhip/
 status-help.txt
+
+# Sensitive / local credentials
+.env
+*.pem
+*.crt
+*.key
+
+# Sandbox & build artifacts
+.sandbox-home/
+.sandbox-tmp/
+rust/target/
