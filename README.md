@@ -103,10 +103,21 @@ cat >> ~/.zshrc << 'EOF'
 # --- Claw Code / LiteLLM proxy settings ---
 export OPENAI_BASE_URL="{litellm_domain}/v1"
 export OPENAI_API_KEY="{key}"
-export SSL_CERT_FILE="$HOME/Documents/claw-code/ha-ca-bundle.pem"
+export SSL_CERT_FILE="$HOME/Documents/claw-code/cert.pem"
 # -----------------------------------------
 EOF
 source ~/.zshrc
+
+# Windows 
+Get-Content D:\Users\cch792\Documents\claw-code-internal\.env | ForEach-Object {
+    if ($_ -match '^\s*([^#][^=]+)=(.*)$') {
+        [System.Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim(), 'Process')
+    }
+}
+
+$env:OPENAI_BASE_URL
+$ENV:OPENAI_API_KEY
+$ENV:SSL_CERT_FILE
 ```
 
 After this, any new terminal will have the correct API endpoint, key, and CA bundle set automatically without further manual exports.
@@ -231,6 +242,9 @@ Build and install to Cargo's default location (`~/.cargo/bin/`, which is usually
 ```bash
 # From the claw-code/rust/ directory
 cargo install --path . --force
+
+# In Windows using this command instead
+cargo install --path crates/rusty-claude-cli --force
 
 # Then from anywhere
 claw --help
